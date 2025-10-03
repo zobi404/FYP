@@ -1,6 +1,6 @@
 from .base import *
 
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ["qaverse-staging.up.railway.app", "localhost"]
 
 CSRF_TRUSTED_ORIGINS = [
