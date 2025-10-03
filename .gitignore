@@ -28,9 +28,6 @@ staticfiles/
 static/
 local_settings.py
 
-# Migrations (if you don’t want to commit auto-generated files)
-*/migrations/*.py
-!*/migrations/__init__.py
 
 # VSCode / PyCharm
 .vscode/
