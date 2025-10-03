@@ -23,7 +23,8 @@ class LoginSerializer(serializers.Serializer):
             "user": {
                 "id": user.id,
                 "email": user.email,
-                "fullname": user.fullname
+                "fullname": user.fullname,
+                "role": user.role
             }
         }
         
