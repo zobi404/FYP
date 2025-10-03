@@ -3,6 +3,11 @@ from .base import *
 DEBUG = False
 ALLOWED_HOSTS = ["https://qaverse-staging.up.railway.app/", "localhost"]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://qaverse-staging.up.railway.app',  
+    'https://*.railway.app',  
+]
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
