@@ -1,6 +1,4 @@
 from rest_framework import serializers
-from rest_framework.response import Response
-from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import User
@@ -15,7 +13,7 @@ class LoginSerializer(serializers.Serializer):
 
         user = authenticate(username=email, password=password)
         if not user:
-            return Response({"error": "Invalid email or password"}, status=status.HTTP_404_NOT_FOUND)
+            raise serializers.ValidationError({"error": "Invalid email or password"})
 
         refresh = RefreshToken.for_user(user)
         
