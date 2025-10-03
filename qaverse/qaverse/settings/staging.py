@@ -1,7 +1,7 @@
 from .base import *
 
 DEBUG = False
-ALLOWED_HOSTS = ["qaverse.onrender.com", "localhost"]
+ALLOWED_HOSTS = ["https://qaverse-staging.up.railway.app/", "localhost"]
 
 DATABASES = {
     "default": {
