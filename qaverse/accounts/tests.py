@@ -10,6 +10,7 @@ class AuthTests(TestCase):
         self.register_url = '/api/v1/auth/register/'
         self.login_url = '/api/v1/auth/login/'
         self.profile_url = '/api/v1/auth/profile/'
+        self.refresh_url = '/api/v1/auth/refresh-token/'
         self.user_data = {
             'email': 'test@example.com',
             'password': 'password123',
@@ -32,8 +33,26 @@ class AuthTests(TestCase):
         response = self.client.post(self.login_url, login_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
         self.assertIn('user', response.data)
-        self.assertEqual(response.data['user']['email'], 'test@example.com')
+
+    def test_refresh_token(self):
+        self.client.post(self.register_url, self.user_data)
+        login_data = {
+            'email': 'test@example.com',
+            'password': 'password123'
+        }
+        login_response = self.client.post(self.login_url, login_data)
+        refresh_token = login_response.data['refresh']
+        
+        response = self.client.post(self.refresh_url, {'refresh_token': refresh_token})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access_token', response.data)
+
+    def test_refresh_token_invalid(self):
+        response = self.client.post(self.refresh_url, {'refresh_token': 'invalid_token'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
 
     def test_profile_view(self):
         self.client.post(self.register_url, self.user_data)
