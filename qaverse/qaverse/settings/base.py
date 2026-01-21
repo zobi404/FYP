@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     #My Apps
     'accounts',
     'api',
+    'projects',
     
     #Dependencies
     'corsheaders',
