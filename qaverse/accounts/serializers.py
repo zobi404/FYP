@@ -3,6 +3,11 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import User
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'fullname', 'role', 'bio', 'avatar', 'github_url', 'linkedin_url']
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -20,19 +25,14 @@ class LoginSerializer(serializers.Serializer):
         return {
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "fullname": user.fullname,
-                "role": user.role
-            }
+            "user": UserSerializer(user).data
         }
         
 class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
     class Meta:
         model = User
-        fields = ['fullname', 'email', 'role', 'password', 'password2']
+        fields = ['fullname', 'email', 'role', 'password', 'password2', 'bio', 'avatar', 'github_url', 'linkedin_url']
         extra_kwargs = {
             "password" : {"write_only": True}
         }
