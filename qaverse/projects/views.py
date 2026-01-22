@@ -3,7 +3,9 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from projects.models import Project
 from projects.serializers import ProjectSerializer
 from projects.permissions import IsMaintainerOrReadOnly
+from drf_spectacular.utils import extend_schema
 
+@extend_schema(tags=['Projects'])
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
