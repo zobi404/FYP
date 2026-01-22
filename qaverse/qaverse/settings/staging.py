@@ -2,8 +2,8 @@ from .base import *
 import os
 import dj_database_url
 
-DEBUG = True
-ALLOWED_HOSTS = ["https://fyp-production-dc9d.up.railway.app", "localhost", "https://qa-verse.vercel.app"]
+DEBUG = False
+ALLOWED_HOSTS = ["https://fyp-production-dc9d.up.railway.app", "localhost", "https://qa-verse.vercel.app", "*"]
 
 CSRF_TRUSTED_ORIGINS = [
     'https://fyp-production-dc9d.up.railway.app',  
