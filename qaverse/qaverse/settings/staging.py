@@ -3,11 +3,12 @@ import os
 import dj_database_url
 
 DEBUG = True
-ALLOWED_HOSTS = ["qaverse-staging.up.railway.app", "localhost"]
+ALLOWED_HOSTS = ["https://fyp-production-dc9d.up.railway.app", "localhost", "https://qa-verse.vercel.app"]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://qaverse-staging.up.railway.app',  
-    'https://*.railway.app',  
+    'https://fyp-production-dc9d.up.railway.app',  
+    'https://*.railway.app',
+    'https://qa-verse.vercel.app'  
 ]
 
 DATABASES = {

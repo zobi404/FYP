@@ -45,3 +45,5 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+
+create_staging_superuser.py
