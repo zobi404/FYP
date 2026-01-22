@@ -4,11 +4,27 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
+from rest_framework import serializers
 
 from .serializers import LoginSerializer, RegisterSerializer, UserSerializer, RefreshTokenSerializer
 
 class Login(GenericAPIView):
     serializer_class = LoginSerializer
+
+    @extend_schema(
+        tags=['Auth'],
+        responses={
+            200: inline_serializer(
+                name='LoginResponse',
+                fields={
+                    'refresh': serializers.CharField(),
+                    'access': serializers.CharField(),
+                    'user': UserSerializer(),
+                }
+            )
+        }
+    )
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -17,6 +33,26 @@ class Login(GenericAPIView):
 
 class GetNewAccessToken(GenericAPIView):
     serializer_class = RefreshTokenSerializer
+
+    @extend_schema(
+        tags=['Auth'],
+        responses={
+            200: inline_serializer(
+                name='RefreshTokenResponse',
+                fields={
+                    'message': serializers.CharField(),
+                    'access_token': serializers.CharField(),
+                }
+            ),
+            400: inline_serializer(
+                name='RefreshTokenError',
+                fields={
+                    'error': serializers.CharField(),
+                    'details': serializers.CharField(), # Or DictField/ListField depending on serializer.errors
+                }
+            )
+        }
+    )
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -42,6 +78,18 @@ class GetNewAccessToken(GenericAPIView):
 class Register(GenericAPIView):
     serializer_class = RegisterSerializer
 
+    @extend_schema(
+        tags=['Auth'],
+        responses={
+            201: inline_serializer(
+                name='RegisterResponse',
+                fields={
+                    'message': serializers.CharField(),
+                }
+            )
+        }
+    )
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -53,6 +101,18 @@ class Register(GenericAPIView):
         
 class ProtectedView(GenericAPIView):
     permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Auth'],
+        responses={
+            200: inline_serializer(
+                name='ProtectedResponse',
+                fields={
+                    'message': serializers.CharField(),
+                }
+            )
+        }
+    )
     def get(self, request):
         return Response({"message": "Authenticated Request"})
 
@@ -60,10 +120,12 @@ class ProfileView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
 
+    @extend_schema(tags=['Auth'])
     def get(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(tags=['Auth'])
     def patch(self, request):
         serializer = self.get_serializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
