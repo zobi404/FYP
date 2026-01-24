@@ -11,11 +11,17 @@ class BugAttachmentSerializer(serializers.ModelSerializer):
 
 class BugCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
+    replies = serializers.SerializerMethodField()
     
     class Meta:
         model = BugComment
-        fields = ['id', 'bug_report', 'user', 'text', 'created_at']
+        fields = ['id', 'bug_report', 'user', 'parent', 'text', 'created_at', 'replies']
         read_only_fields = ['user', 'created_at']
+
+    def get_replies(self, obj):
+        if obj.replies.exists():
+            return BugCommentSerializer(obj.replies.all(), many=True).data
+        return []
 
 class BugReportSerializer(serializers.ModelSerializer):
     tester = serializers.StringRelatedField(read_only=True)

@@ -21,6 +21,10 @@ INSTALLED_APPS = [
     'accounts',
     'api',
     'projects',
+    'bug_reports',
+    'gamification',
+    'notifications',
+    'analytics',
     
     #Dependencies
     'corsheaders',

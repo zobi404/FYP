@@ -49,6 +49,7 @@ class BugAttachment(models.Model):
 class BugComment(models.Model):
     bug_report = models.ForeignKey(BugReport, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
