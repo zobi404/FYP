@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'accounts',
     'api',
     'projects',
+    'bug_reports',
     
     #Dependencies
     'corsheaders',
@@ -118,3 +119,6 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
 }
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
