@@ -6,7 +6,7 @@ DEBUG = False
 ALLOWED_HOSTS = ["https://fyp-production-dc9d.up.railway.app", "localhost", "https://qa-verse.vercel.app", "*"]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://fyp-production-dc9d.up.railway.app',  
+    'https://fyp-production-dc9d.up.railway.app',   
     'https://*.railway.app',
     'https://qa-verse.vercel.app'  
 ]
