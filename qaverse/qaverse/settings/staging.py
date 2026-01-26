@@ -9,7 +9,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://fyp-production-dc9d.up.railway.app',   
     'https://*.railway.app',
     'https://qa-verse.vercel.app',
-    'https://qa-verse-e52bd37vc-malik-umairs-projects.vercel.app' 
+    'https://qa-verse-e52bd37vc-malik-umairs-projects.vercel.app',
+    '*'
 ]
 
 DATABASES = {
