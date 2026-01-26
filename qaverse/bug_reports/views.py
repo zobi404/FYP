@@ -56,7 +56,23 @@ class BugReportViewSet(viewsets.ModelViewSet):
             return Response({"error": "Only pending reports can be approved."}, status=status.HTTP_400_BAD_REQUEST)
         bug_report.status = 'approved'
         bug_report.save()
-        # TODO: Award XP here
+
+        # Award XP based on severity
+        xp_map = {
+            'critical': 100,
+            'high': 50,
+            'medium': 30,
+            'low': 10
+        }
+        xp_amount = xp_map.get(bug_report.severity, 10)
+        
+        from gamification.models import XPTransaction
+        XPTransaction.objects.create(
+            user=bug_report.tester,
+            amount=xp_amount,
+            source='bug_report_approved',
+            reference_id=bug_report.id
+        )
         return Response(BugReportSerializer(bug_report).data)
 
     @extend_schema(
