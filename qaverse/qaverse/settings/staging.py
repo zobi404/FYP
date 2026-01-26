@@ -10,7 +10,13 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
     'https://qa-verse.vercel.app',
     'https://qa-verse-e52bd37vc-malik-umairs-projects.vercel.app',
-    '*'
+    'https://fyp-production-dc9d.up.railway.app',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://qa-verse.vercel.app",
+    "https://qa-verse-e52bd37vc-malik-umairs-projects.vercel.app",
+    "http://localhost:3000",
 ]
 
 DATABASES = {
