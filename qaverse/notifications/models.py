@@ -10,7 +10,7 @@ class Notification(models.Model):
     
     # Generic relation to target object
     target_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
-    target_object_id = models.PositiveIntegerField(null=True, blank=True)
+    target_object_id = models.CharField(max_length=255, null=True, blank=True)
     target = GenericForeignKey('target_content_type', 'target_object_id')
     
     is_read = models.BooleanField(default=False)

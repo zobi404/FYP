@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.utils import timezone
@@ -25,13 +26,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         ("admin", "Admin"),
     )
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True, max_length=255)
     fullname = models.CharField(max_length=50, blank=True, null=True, default="")
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="tester")
     
     # Profile Fields
     bio = models.TextField(blank=True, null=True)
-    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    avatar_url = models.URLField(blank=True, null=True, help_text="URL to avatar image (e.g. Cloudinary)")
     github_url = models.URLField(blank=True, null=True)
     linkedin_url = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=True)

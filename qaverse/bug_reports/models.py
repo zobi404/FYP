@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from accounts.models import User
 from projects.models import Project
@@ -24,6 +25,7 @@ class BugReport(models.Model):
         ('resolved', 'Resolved'),
     )
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='bug_reports')
     tester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reported_bugs')
     title = models.CharField(max_length=200)
@@ -39,14 +41,16 @@ class BugReport(models.Model):
         return f"{self.title} ({self.status})"
 
 class BugAttachment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bug_report = models.ForeignKey(BugReport, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='bug_reports/attachments/')
+    file_url = models.URLField(help_text="URL to file (e.g. Cloudinary)")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Attachment for {self.bug_report.title}"
 
 class BugComment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bug_report = models.ForeignKey(BugReport, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')

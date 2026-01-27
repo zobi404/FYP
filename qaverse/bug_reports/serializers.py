@@ -6,7 +6,7 @@ from accounts.serializers import UserSerializer
 class BugAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = BugAttachment
-        fields = ['id', 'bug_report', 'file', 'uploaded_at']
+        fields = ['id', 'bug_report', 'file_url', 'uploaded_at']
         read_only_fields = ['uploaded_at']
 
 class BugCommentSerializer(serializers.ModelSerializer):

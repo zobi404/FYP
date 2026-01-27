@@ -6,7 +6,7 @@ from accounts.models import User
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
-        fields = ['id', 'name', 'description', 'icon', 'xp_required']
+        fields = ['id', 'name', 'description', 'icon_url', 'xp_required']
 
 class UserBadgeSerializer(serializers.ModelSerializer):
     badge = BadgeSerializer(read_only=True)

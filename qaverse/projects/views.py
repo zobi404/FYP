@@ -1,4 +1,6 @@
-from rest_framework import viewsets, filters    
+from rest_framework import viewsets, filters, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from projects.models import Project
 from projects.serializers import ProjectSerializer
@@ -17,3 +19,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(maintainer=self.request.user)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def maintained(self, request):
+        projects = Project.objects.filter(maintainer=request.user)
+        serializer = self.get_serializer(projects, many=True)
+        return Response(serializer.data)

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from accounts.models import User
 
@@ -14,9 +15,11 @@ class Project(models.Model):
         ('completed', 'Completed'),
     )
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     maintainer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
     title = models.CharField(max_length=200)
     description = models.TextField()
+    instructions = models.JSONField(default=list, blank=True, help_text="List of instructions for the project")
     technology_stack = models.CharField(max_length=200, help_text="e.g. Django, React, PostgreSQL")
     testing_url = models.URLField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)

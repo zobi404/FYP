@@ -6,7 +6,7 @@ from accounts.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'fullname', 'role', 'bio', 'avatar', 'github_url', 'linkedin_url']
+        fields = ['id', 'email', 'fullname', 'role', 'bio', 'avatar_url', 'github_url', 'linkedin_url']
 
 class RefreshTokenSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
@@ -35,7 +35,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
     class Meta:
         model = User
-        fields = ['fullname', 'email', 'role', 'password', 'password2', 'bio', 'avatar', 'github_url', 'linkedin_url']
+        fields = ['fullname', 'email', 'role', 'password', 'password2', 'bio', 'avatar_url', 'github_url', 'linkedin_url']
         extra_kwargs = {
             "password" : {"write_only": True}
         }
