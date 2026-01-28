@@ -76,3 +76,23 @@ class CommunicationTests(APITestCase):
         comments = response.data['comments']
         self.assertEqual(len(comments[0]['replies']), 1)
         self.assertEqual(comments[0]['replies'][0]['text'], 'Thanks, will check')
+
+    def test_list_performance(self):
+        # Create 20 notifications for the maintainer
+        # Using bug report as target
+        for i in range(20):
+            Notification.objects.create(
+                recipient=self.maintainer,
+                actor=self.tester,
+                verb='did something',
+                target=self.bug_report
+            )
+            
+        self.client.force_authenticate(user=self.maintainer)
+        url = reverse('notification-list')
+
+        # Should be optimized: 1 user, 1 count, 1 notifications+actor+content_type, 1 target (prefetch generic)
+        # Note: Generic prefetch might do one query per content type. Here only BugReport.
+        with self.assertNumQueries(lambda n: n < 10):
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -95,3 +95,29 @@ class BugReportTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         bug_report.refresh_from_db()
         self.assertEqual(bug_report.status, 'resolved')
+
+    def test_list_performance(self):
+        # Create 10 bugs with attachments and comments to test prefetch
+        for i in range(10):
+            b = BugReport.objects.create(
+                project=self.project,
+                tester=self.tester,
+                title=f'Bug {i}',
+                description='Desc',
+                steps_to_reproduce='Steps',
+                category='ui',
+                severity='low'
+            )
+            # Add nested data
+            from bug_reports.models import BugAttachment, BugComment
+            BugAttachment.objects.create(bug_report=b, file_url='http://x.com')
+            BugComment.objects.create(bug_report=b, user=self.maintainer, text='Fixing')
+
+        self.client.force_authenticate(user=self.maintainer)
+        url = reverse('bugreport-list')
+        
+        # Checking for O(1) queries instead of O(N)
+        # 1 user, 1 count, 1 bugs+project+tester, 1 attachments, 1 comments, 1 comment_users
+        with self.assertNumQueries(lambda n: n < 15): 
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

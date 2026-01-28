@@ -82,3 +82,18 @@ class ProjectTests(TestCase):
         update_data = {'title': 'Hacked Title'}
         response = self.client.patch(f'{self.projects_url}{project.id}/', update_data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_performance(self):
+        # Create 20 projects with different maintainers to trigger N+1 if not optimized
+        for i in range(20):
+            maintainer = User.objects.create_user(email=f'm{i}@example.com', password='pw')
+            Project.objects.create(maintainer=maintainer, **self.project_data)
+        
+        self.client.force_authenticate(user=self.maintainer)
+        
+        # Should be constant queries: 
+        # 1 for user, 1 for session/auth (maybe), 1 for count, 1 for projects+maintainers
+        # exact number depends on auth and other middleware, but should NOT be 20+
+        with self.assertNumQueries(lambda n: n < 10): 
+            response = self.client.get(self.projects_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

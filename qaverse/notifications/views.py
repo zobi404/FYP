@@ -15,7 +15,9 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user)
+        return Notification.objects.filter(recipient=self.request.user).select_related(
+            'actor', 'target_content_type'
+        ).prefetch_related('target')
 
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):

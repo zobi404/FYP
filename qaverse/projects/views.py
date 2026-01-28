@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema
 
 @extend_schema(tags=['Projects'])
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
+    queryset = Project.objects.all().select_related('maintainer')
     serializer_class = ProjectSerializer
     permission_classes = [IsMaintainerOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -22,6 +22,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def maintained(self, request):
-        projects = Project.objects.filter(maintainer=request.user)
+        projects = Project.objects.filter(maintainer=request.user).select_related('maintainer')
         serializer = self.get_serializer(projects, many=True)
         return Response(serializer.data)

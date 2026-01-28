@@ -34,11 +34,16 @@ class BugReportViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = BugReport.objects.select_related('project', 'tester').prefetch_related(
+            'attachments', 
+            'comments', 
+            'comments__user'
+        )
         if user.role == 'maintainer':
-            return BugReport.objects.filter(project__maintainer=user)
+            return queryset.filter(project__maintainer=user)
         if user.role == 'tester':
-            return BugReport.objects.filter(tester=user)
-        return BugReport.objects.all()
+            return queryset.filter(tester=user)
+        return queryset.all()
 
     def perform_create(self, serializer):
         serializer.save(tester=self.request.user)

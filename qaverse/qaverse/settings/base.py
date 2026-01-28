@@ -66,6 +66,13 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
 ROOT_URLCONF = 'qaverse.urls'
 
 TEMPLATES = [
