@@ -49,7 +49,19 @@ class ProjectTests(TestCase):
         self.client.logout()
         response = self.client.get(self.projects_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results']), 1)
+
+    def test_pagination(self):
+        # Create 15 projects
+        for i in range(15):
+            Project.objects.create(maintainer=self.maintainer, **self.project_data)
+            
+        response = self.client.get(self.projects_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 15)
+        self.assertIsNotNone(response.data['next'])
+        self.assertIsNone(response.data['previous'])
+        self.assertEqual(len(response.data['results']), 10)
 
     def test_update_project_owner(self):
         project = Project.objects.create(maintainer=self.maintainer, **self.project_data)
