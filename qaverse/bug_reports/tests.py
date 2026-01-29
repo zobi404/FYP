@@ -121,3 +121,44 @@ class BugReportTests(APITestCase):
         with self.assertNumQueries(lambda n: n < 15): 
             response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_comment_recursion_limit(self):
+        """Test that circular comment references don't cause recursion error"""
+        bug_report = BugReport.objects.create(
+            project=self.project,
+            tester=self.tester,
+            title='Recursion Bug',
+            description='Desc',
+            steps_to_reproduce='Steps',
+            category='ui',
+            severity='low'
+        )
+        
+        from bug_reports.models import BugComment
+        
+        # Create circular reference A -> B -> A
+        comment_a = BugComment.objects.create(
+            bug_report=bug_report, 
+            user=self.maintainer, 
+            text='Comment A'
+        )
+        comment_b = BugComment.objects.create(
+            bug_report=bug_report, 
+            user=self.maintainer, 
+            text='Comment B',
+            parent=comment_a
+        )
+        # Make A a child of B (cycle)
+        comment_a.parent = comment_b
+        comment_a.save()
+            
+        url = reverse('bugreport-list')
+        self.client.force_authenticate(user=self.maintainer)
+        try:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Ensure we got a response and not a crash
+            print("Recursion test passed successfully")
+        except RecursionError:
+            self.fail("RecursionError raised during serialization of circular comments")
+

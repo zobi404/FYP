@@ -19,8 +19,14 @@ class BugCommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'created_at']
 
     def get_replies(self, obj):
+        depth = self.context.get('depth', 0)
+        if depth > 3:
+            return []
+            
         if obj.replies.exists():
-            return BugCommentSerializer(obj.replies.all(), many=True).data
+            context = self.context.copy()
+            context['depth'] = depth + 1
+            return BugCommentSerializer(obj.replies.all(), many=True, context=context).data
         return []
 class BugReportSerializer(serializers.ModelSerializer):
     tester = serializers.StringRelatedField(read_only=True)
