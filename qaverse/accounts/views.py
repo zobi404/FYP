@@ -7,7 +7,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter, OpenApiTypes
 from rest_framework import serializers
 
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer, RefreshTokenSerializer
+from .serializers import (
+    LoginSerializer, RegisterSerializer, UserSerializer, RefreshTokenSerializer,
+    ChangePasswordSerializer, PasswordResetRequestSerializer, 
+    PasswordResetVerifySerializer, PasswordResetConfirmSerializer, AccountVerificationSerializer
+)
 
 class Login(GenericAPIView):
     serializer_class = LoginSerializer
@@ -93,9 +97,31 @@ class Register(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()  
+        user = serializer.save()
+        
+        # Generate OTP
+        import random
+        otp_code = str(random.randint(100000, 999999))
+        
+        from accounts.models import EmailOTP
+        EmailOTP.objects.create(email=user.email, otp_code=otp_code, purpose='ACCOUNT_ACTIVATION')
+        
+        # Send Email
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+        from django.utils.html import strip_tags
+        from django.conf import settings
+        
+        subject = 'Verify Your Account - Qaverse'
+        html_message = render_to_string('accounts/account_verification_email.html', {'otp_code': otp_code})
+        plain_message = strip_tags(html_message)
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [user.email]
+        
+        send_mail(subject, plain_message, email_from, recipient_list, html_message=html_message, fail_silently=False)
+
         return Response(
-            {"message": "User registered successfully"},
+            {"message": "User registered successfully. Please verify your email."},
             status=status.HTTP_201_CREATED
         )
         
@@ -131,4 +157,85 @@ class ProfileView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class ChangePasswordView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    @extend_schema(tags=['Auth'])
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        
+        user = request.user
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        
+        return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+
+class PasswordResetRequestView(GenericAPIView):
+    serializer_class = PasswordResetRequestSerializer
+    permission_classes = []
+
+    @extend_schema(tags=['Auth'])
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        
+        # Generate OTP
+        import random
+        otp_code = str(random.randint(100000, 999999))
+        
+        from accounts.models import EmailOTP
+        EmailOTP.objects.create(email=email, otp_code=otp_code, purpose='PASSWORD_RESET')
+        
+        # Send Email
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+        from django.utils.html import strip_tags
+        from django.conf import settings
+        
+        subject = 'Password Reset Request - Qaverse'
+        html_message = render_to_string('accounts/password_reset_email.html', {'otp_code': otp_code})
+        plain_message = strip_tags(html_message)
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [email]
+        
+        send_mail(subject, plain_message, email_from, recipient_list, html_message=html_message, fail_silently=False)
+        
+        return Response({"message": "OTP sent to email"}, status=status.HTTP_200_OK)
+
+class PasswordResetVerifyView(GenericAPIView):
+    serializer_class = PasswordResetVerifySerializer
+    permission_classes = []
+
+    @extend_schema(tags=['Auth'])
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+
+class PasswordResetConfirmView(GenericAPIView):
+    serializer_class = PasswordResetConfirmSerializer
+    permission_classes = []
+
+    @extend_schema(tags=['Auth'])
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
+
+class VerifyAccountView(GenericAPIView):
+    serializer_class = AccountVerificationSerializer
+    permission_classes = []
+
+    @extend_schema(tags=['Auth'])
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Account verified successfully"}, status=status.HTTP_200_OK)
         

@@ -48,3 +48,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.email} ({self.role})"
     
+class EmailOTP(models.Model):
+    PURPOSE_CHOICES = (
+        ('PASSWORD_RESET', 'Password Reset'),
+        ('ACCOUNT_ACTIVATION', 'Account Activation'),
+    )
+    email = models.EmailField()
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='PASSWORD_RESET')
+
+    def is_valid(self):
+        # Valid if not used and created within last 10 minutes
+        if self.is_used:
+            return False
+        return timezone.now() < self.created_at + timezone.timedelta(minutes=10)
+
+    def __str__(self):
+        return f"OTP for {self.email} ({self.purpose}): {self.otp_code}"
+    
