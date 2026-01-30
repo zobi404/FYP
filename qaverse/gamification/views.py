@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, filters
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Sum, Count
 from drf_spectacular.utils import extend_schema
@@ -15,6 +16,12 @@ class XPTransactionViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return XPTransaction.objects.filter(user=self.request.user).order_by('-timestamp')
+
+    @extend_schema(description="Get total XP of the current user", tags=['Gamification'])
+    @action(detail=False, methods=['get'])
+    def total(self, request):
+        total_xp = XPTransaction.objects.filter(user=request.user).aggregate(total=Sum('amount'))['total'] or 0
+        return Response({'total_xp': total_xp})
 
 class BadgeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Badge.objects.all()
