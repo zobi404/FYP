@@ -4,7 +4,7 @@ from drf_spectacular.utils import extend_schema
 from bug_reports.models import BugReport
 from gamification.models import XPTransaction
 from projects.models import Project
-from .serializers import TesterStatsSerializer, ProjectStatsSerializer
+from .serializers import TesterStatsSerializer, ProjectStatsSerializer, MaintainerStatsSerializer
 
 class TesterStatsView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -49,5 +49,33 @@ class ProjectStatsView(views.APIView):
             'total_bugs': total_bugs,
             'status_distribution': {item['status']: item['count'] for item in status_dist},
             'severity_distribution': {item['severity']: item['count'] for item in severity_dist}
+        }
+        return response.Response(data)
+
+class MaintainerStatsView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses=MaintainerStatsSerializer, tags=['Analytics'])
+    def get(self, request):
+        user = request.user
+        
+        # 1. Active Projects of maintainer
+        active_projects = Project.objects.filter(maintainer=user, status='active').count()
+        
+        # 2. Total testers testing on maintainer projects
+        # Testers who have submitted at least one bug report on any project owned by the maintainer
+        testers_count = BugReport.objects.filter(project__maintainer=user).values('tester').distinct().count()
+        
+        # 3. Total bug reports for this maintainer
+        total_bugs = BugReport.objects.filter(project__maintainer=user).count()
+        
+        # 4. Total approved bugs
+        approved_bugs = BugReport.objects.filter(project__maintainer=user, status='approved').count()
+        
+        data = {
+            'total_active_projects': active_projects,
+            'total_testers': testers_count,
+            'total_bugs': total_bugs,
+            'approved_bugs': approved_bugs
         }
         return response.Response(data)

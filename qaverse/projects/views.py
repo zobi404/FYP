@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework import viewsets, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -9,7 +10,10 @@ from drf_spectacular.utils import extend_schema
 
 @extend_schema(tags=['Projects'])
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all().select_related('maintainer')
+    queryset = Project.objects.all().select_related('maintainer').annotate(
+        total_bugs_reported=Count('bug_reports'),
+        total_active_testers=Count('bug_reports__tester', distinct=True)
+    )
     serializer_class = ProjectSerializer
     permission_classes = [IsMaintainerOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -22,6 +26,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def maintained(self, request):
-        projects = Project.objects.filter(maintainer=request.user).select_related('maintainer')
+        projects = Project.objects.filter(maintainer=request.user).select_related('maintainer').annotate(
+            total_bugs_reported=Count('bug_reports'),
+            total_active_testers=Count('bug_reports__tester', distinct=True)
+        ).order_by('-created_at')
+        page = self.paginate_queryset(projects)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(projects, many=True)
         return Response(serializer.data)

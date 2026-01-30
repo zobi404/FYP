@@ -12,3 +12,9 @@ class ProjectStatsSerializer(serializers.Serializer):
     total_bugs = serializers.IntegerField()
     status_distribution = serializers.DictField()
     severity_distribution = serializers.DictField()
+
+class MaintainerStatsSerializer(serializers.Serializer):
+    total_active_projects = serializers.IntegerField()
+    total_testers = serializers.IntegerField()
+    total_bugs = serializers.IntegerField()
+    approved_bugs = serializers.IntegerField()

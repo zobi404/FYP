@@ -96,3 +96,24 @@ class CommunicationTests(APITestCase):
         with self.assertNumQueries(lambda n: n < 10):
             response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_notification_structure(self):
+        # Verify object_name is present
+        self.client.force_authenticate(user=self.maintainer)
+        url = reverse('notification-list')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check first notification (newest)
+        # Should be related to bug creation if ran in isolation, or the loop above
+        # But we know self.bug_report and self.project have titles.
+        
+        # Checking if at least one notification has object_name populated correctly
+        results = response.data
+        if 'results' in results: # Pagination
+            results = results['results']
+            
+        self.assertTrue(len(results) > 0)
+        first_notif = results[0]
+        self.assertIn('object_name', first_notif)
+        self.assertTrue(first_notif['object_name']) # Should not be None or empty

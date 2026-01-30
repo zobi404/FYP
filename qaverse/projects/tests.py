@@ -3,6 +3,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from accounts.models import User
 from projects.models import Project
+from bug_reports.models import BugReport
 
 class ProjectTests(TestCase):
     def setUp(self):
@@ -97,3 +98,40 @@ class ProjectTests(TestCase):
         with self.assertNumQueries(lambda n: n < 10): 
             response = self.client.get(self.projects_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_project_stats_annotations(self):
+        project = Project.objects.create(maintainer=self.maintainer, **self.project_data)
+        
+        # Create bugs
+        BugReport.objects.create(project=project, tester=self.tester, title='Bug 1', severity='low', description='d', steps_to_reproduce='s', category='ui')
+        BugReport.objects.create(project=project, tester=self.tester, title='Bug 2', severity='low', description='d', steps_to_reproduce='s', category='ui')
+        
+        # Second tester
+        tester2 = User.objects.create_user(email='t2@example.com', password='pw', role='tester')
+        BugReport.objects.create(project=project, tester=tester2, title='Bug 3', severity='high', description='d', steps_to_reproduce='s', category='ui')
+        
+        url = f'{self.projects_url}{project.id}/'
+        self.client.force_authenticate(user=self.maintainer)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Total bugs: 3
+        self.assertEqual(response.data['total_bugs_reported'], 3)
+        # Active testers: 2 (tester and tester2)
+        self.assertEqual(response.data['total_active_testers'], 2)
+
+    def test_maintained_projects_pagination(self):
+        # Create 15 projects for maintainer
+        for i in range(15):
+             data = self.project_data.copy()
+             data['title'] = f"Proj {i}"
+             Project.objects.create(maintainer=self.maintainer, **data)
+
+        self.client.force_authenticate(user=self.maintainer)
+        url = f'{self.projects_url}maintained/'
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 15)
+        self.assertIsNotNone(response.data['next'])
+        self.assertEqual(len(response.data['results']), 10) # Default page size is likely 10
