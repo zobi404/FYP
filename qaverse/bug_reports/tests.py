@@ -162,3 +162,57 @@ class BugReportTests(APITestCase):
         except RecursionError:
             self.fail("RecursionError raised during serialization of circular comments")
 
+    def test_get_bugs_by_project_payload(self):
+        """Test retrieving bugs by project_id payload (action)"""
+        # Create another project and bug to ensure filtering works
+        other_project = Project.objects.create(
+            maintainer=self.maintainer,
+            title='Other Project',
+            description='Desc',
+            technology_stack='Django',
+            testing_url='http://other.com',
+            category='web',
+            status='active'
+        )
+        other_bug = BugReport.objects.create(
+            project=other_project,
+            tester=self.tester,
+            title='Other Bug',
+            description='Desc',
+            steps_to_reproduce='Steps',
+            category='ui',
+            severity='low'
+        )
+        
+        target_bug = BugReport.objects.create(
+            project=self.project,
+            tester=self.tester,
+            title='Target Bug',
+            description='Desc',
+            steps_to_reproduce='Steps',
+            category='ui',
+            severity='low'
+        )
+        
+        url = reverse('bugreport-get-by-project')
+        self.client.force_authenticate(user=self.maintainer)
+        
+        data = {'project_id': str(self.project.id)}
+        response = self.client.post(url, data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], str(target_bug.id))
+        
+        # Test standard filtering as well
+        list_url = reverse('bugreport-list')
+        response = self.client.get(list_url, {'project': self.project.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Specifically checking if the target bug is present and other bug is not
+        if 'results' in response.data:
+            ids = [b['id'] for b in response.data['results']]
+        else:
+            ids = [b['id'] for b in response.data]
+        self.assertIn(str(target_bug.id), ids)
+        self.assertNotIn(str(other_bug.id), ids)
+

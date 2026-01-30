@@ -1,7 +1,8 @@
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import viewsets, permissions, status, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from .models import BugReport, BugAttachment, BugComment
 from .serializers import BugReportSerializer, BugAttachmentSerializer, BugCommentSerializer
 from .permissions import IsReportOwnerOrMaintainer, IsMaintainerOfProject, IsTester
@@ -18,10 +19,34 @@ from .permissions import IsReportOwnerOrMaintainer, IsMaintainerOfProject, IsTes
 class BugReportViewSet(viewsets.ModelViewSet):
     queryset = BugReport.objects.all()
     serializer_class = BugReportSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['title', 'category', 'severity', 'status']
     ordering_fields = ['created_at', 'severity', 'status']
     ordering = ['-created_at']
+    filterset_fields = ['project']
+
+    @extend_schema(
+        request=inline_serializer(
+           name='ProjectBugRequest',
+           fields={
+               'project_id': serializers.UUIDField()
+           }
+        ),
+        responses={200: BugReportSerializer(many=True)},
+        description="Get all bug reports for a specific project (Payload based)",
+        tags=['Bug Reporting']
+    )
+    @action(detail=False, methods=['post'], url_path='project')
+    def get_by_project(self, request):
+        project_id = request.data.get('project_id')
+        if not project_id:
+            return Response({"error": "project_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Filter queryset based on existing permissions logic + project_id
+        # We use filter() on get_queryset() so that user permissions are respected
+        queryset = self.get_queryset().filter(project__id=project_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_permissions(self):
         if self.action == 'create':
