@@ -99,32 +99,37 @@ class Register(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
-        # Generate OTP
-        import random
-        otp_code = str(random.randint(100000, 999999))
-        
-        from accounts.models import EmailOTP
-        EmailOTP.objects.create(email=user.email, otp_code=otp_code, purpose='ACCOUNT_ACTIVATION')
-        
-        # Send Email
-        from django.core.mail import send_mail
-        from django.template.loader import render_to_string
-        from django.utils.html import strip_tags
-        from django.conf import settings
-        
-        subject = 'Verify Your Account - Qaverse'
-        html_message = render_to_string('accounts/account_verification_email.html', {'otp_code': otp_code})
-        plain_message = strip_tags(html_message)
-        email_from = settings.EMAIL_HOST_USER
-        recipient_list = [user.email]
-        
         try:
+            # Generate OTP
+            import random
+            otp_code = str(random.randint(100000, 999999))
+            
+            from accounts.models import EmailOTP
+            EmailOTP.objects.create(email=user.email, otp_code=otp_code, purpose='ACCOUNT_ACTIVATION')
+            
+            # Send Email
+            from django.core.mail import send_mail
+            from django.template.loader import render_to_string
+            from django.utils.html import strip_tags
+            from django.conf import settings
+            
+            subject = 'Verify Your Account - Qaverse'
+            html_message = render_to_string('accounts/account_verification_email.html', {'otp_code': otp_code})
+            plain_message = strip_tags(html_message)
+            email_from = settings.EMAIL_HOST_USER
+            recipient_list = [user.email]
+            
             send_mail(subject, plain_message, email_from, recipient_list, html_message=html_message, fail_silently=False)
         except Exception as e:
             # Delete user if email fails to avoid stale accounts
             user.delete()
+            import traceback
             return Response(
-                {"error": "Failed to send verification email", "details": str(e)},
+                {
+                    "error": "Registration failed during post-processing", 
+                    "details": str(e),
+                    "traceback": traceback.format_exc()
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
