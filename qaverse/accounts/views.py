@@ -118,7 +118,15 @@ class Register(GenericAPIView):
         email_from = settings.EMAIL_HOST_USER
         recipient_list = [user.email]
         
-        send_mail(subject, plain_message, email_from, recipient_list, html_message=html_message, fail_silently=False)
+        try:
+            send_mail(subject, plain_message, email_from, recipient_list, html_message=html_message, fail_silently=False)
+        except Exception as e:
+            # Delete user if email fails to avoid stale accounts
+            user.delete()
+            return Response(
+                {"error": "Failed to send verification email", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response(
             {"message": "User registered successfully. Please verify your email."},
