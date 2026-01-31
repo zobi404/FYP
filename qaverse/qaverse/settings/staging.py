@@ -17,6 +17,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://qa-verse.vercel.app",
     "https://qa-verse-e52bd37vc-malik-umairs-projects.vercel.app",
     "http://localhost:3000",
+    "https://fyp-production-dc9d.up.railway.app",
+    "https://*.railway.app",
 ]
 
 DATABASES = {
