@@ -11,3 +11,6 @@ gunicorn>=21.2.0        # for production (optional)
 pillow
 drf-spectacular
 django-filter
+google-generativeai
+beautifulsoup4
+requests

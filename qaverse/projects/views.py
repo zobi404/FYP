@@ -10,16 +10,18 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 @extend_schema(tags=['Projects'])
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all().select_related('maintainer').annotate(
-        total_bugs_reported=Count('bug_reports'),
-        total_active_testers=Count('bug_reports__tester', distinct=True)
-    )
     serializer_class = ProjectSerializer
     permission_classes = [IsMaintainerOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'technology_stack', 'category']
     ordering_fields = ['created_at', 'status']
     ordering = ['-created_at']
+
+    def get_queryset(self):
+        return Project.objects.all().select_related('maintainer').annotate(
+            total_bugs_reported=Count('bug_reports'),
+            total_active_testers=Count('bug_reports__tester', distinct=True)
+        )
 
     def perform_create(self, serializer):
         serializer.save(maintainer=self.request.user)
@@ -32,10 +34,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     )
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def maintained(self, request):
-        projects = Project.objects.filter(maintainer=request.user).select_related('maintainer').annotate(
-            total_bugs_reported=Count('bug_reports'),
-            total_active_testers=Count('bug_reports__tester', distinct=True)
-        ).order_by('-created_at')
+        projects = self.get_queryset().filter(maintainer=request.user).order_by('-created_at')
         page = self.paginate_queryset(projects)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

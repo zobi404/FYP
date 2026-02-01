@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'gamification',
     'notifications',
     'analytics',
+    'compliance',
     
     #Dependencies
     'corsheaders',
